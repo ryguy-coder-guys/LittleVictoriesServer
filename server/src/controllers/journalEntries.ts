@@ -63,7 +63,7 @@ export const addJournalEntry: RequestHandler = async (
           content,
           date
         });
-        res.status(201);
+        res.sendStatus(201);
       } catch (err) {
         console.log('entry submission error', err);
         res.sendStatus(500);
