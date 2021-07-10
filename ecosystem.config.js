@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'LittleVictories',
-      script: './server/src/index.ts',
+      script: './dist/index.js',
     },
   ],
   deploy: {
