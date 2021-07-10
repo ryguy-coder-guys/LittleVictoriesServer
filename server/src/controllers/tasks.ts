@@ -102,10 +102,15 @@ export const markTaskAsComplete: RequestHandler<TaskReqParams> = async (
           { where: { id: task.user_id }, returning: true }
         );
         const updatedUser = await User.findOne({ where: { id: task.user_id } });
+        const completedTasks = await Task.findAll({
+          where: { user_id: task.user_id, is_complete: true }
+        });
+        const numCompletedTasks = completedTasks.length;
         res.send({
           task,
           points: updatedUser?.points,
-          level: updatedUser?.level
+          level: updatedUser?.level,
+          numCompletedTasks
         });
       }
     }
@@ -148,10 +153,15 @@ export const markTaskAsIncomplete: RequestHandler<TaskReqParams> = async (
           { where: { id: task.user_id } }
         );
         const updatedUser = await User.findOne({ where: { id: task.user_id } });
+        const completedTasks = await Task.findAll({
+          where: { user_id: task.user_id, is_complete: true }
+        });
+        const numCompletedTasks = completedTasks.length;
         res.send({
           task,
           points: updatedUser?.points,
-          level: updatedUser?.level
+          level: updatedUser?.level,
+          numCompletedTasks
         });
       }
     }

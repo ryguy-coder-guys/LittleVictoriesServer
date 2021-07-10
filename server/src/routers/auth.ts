@@ -11,7 +11,7 @@ const router = Router();
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
-router.get('/users', users);
+router.get('/users/:userId', users);
 router.delete('/:id', removeUser);
 
 export default router;

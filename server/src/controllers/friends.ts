@@ -13,7 +13,7 @@ export const addFriend: RequestHandler = async (req, res): Promise<void> => {
       }
     });
     if (!user) {
-      res.send('user does not exist');
+      res.send({ addSuccessful: false });
     } else {
       const friend = await User.findOne({
         where: {
@@ -21,7 +21,7 @@ export const addFriend: RequestHandler = async (req, res): Promise<void> => {
         }
       });
       if (!friend) {
-        res.send('friend does not exist');
+        res.send({ addSuccessful: false });
       } else {
         if (user && friend) {
           const friendShip = await Friend.create({
@@ -30,9 +30,15 @@ export const addFriend: RequestHandler = async (req, res): Promise<void> => {
           });
 
           if (!friendShip) {
-            res.send('friendShip insertion did not work');
+            res.send({ addSuccessful: false });
           } else {
-            res.send(true);
+            const friendships = await Friend.findAll({
+              where: { user_id: userId }
+            });
+            res.send({
+              addSuccessful: true,
+              numFollowees: friendships.length
+            });
           }
         }
       }
@@ -54,7 +60,7 @@ export const removeFriend: RequestHandler<RemoveFriendReqParams> = async (
       }
     });
     if (!user) {
-      res.send('user does not exist');
+      res.send({ deleteSuccessful: false });
     } else {
       const friend = await User.findOne({
         where: {
@@ -62,7 +68,7 @@ export const removeFriend: RequestHandler<RemoveFriendReqParams> = async (
         }
       });
       if (!friend) {
-        res.send('friend does not exist');
+        res.send({ deleteSuccessful: false });
       } else {
         if (user && friend) {
           await Friend.destroy({
@@ -71,7 +77,13 @@ export const removeFriend: RequestHandler<RemoveFriendReqParams> = async (
               friend_id: friend.id
             }
           });
-          res.send(true);
+          const friendships = await Friend.findAll({
+            where: { user_id: userId }
+          });
+          res.send({
+            deleteSuccessful: true,
+            numFollowees: friendships.length
+          });
         }
       }
     }

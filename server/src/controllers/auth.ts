@@ -13,6 +13,7 @@ import { Friend } from '../database/models/friend';
 export { UserInstance } from '../database/models/user';
 import { Like } from '../database/models/like';
 import { Comment } from '../database/models/comment';
+import sequelize from 'sequelize';
 
 const getHash = async (password: string): Promise<string> =>
   await bcrypt.hash(password, 12);
@@ -121,20 +122,22 @@ export const loginUser: RequestHandler = async (req, res): Promise<void> => {
   }
 };
 
-export const users: RequestHandler = async (req, res): Promise<void> => {
+export const users: RequestHandler<{ userId: string }> = async (
+  req,
+  res
+): Promise<void> => {
   try {
+    const { userId } = req.params;
     const users = await User.findAll();
     const mappedUsers = await Promise.all(
       users.map(async (user) => {
-        const isFriend = await Friend.findOne({
-          where: {
-            friend_id: user.id
-          }
+        const friendship = await Friend.findOne({
+          where: { user_id: userId, friend_id: user.getDataValue('id') }
         });
         return {
           id: user.getDataValue('id'),
           username: user.getDataValue('username'),
-          isFriend: !!isFriend
+          isFriend: friendship ? true : false
         };
       })
     );
