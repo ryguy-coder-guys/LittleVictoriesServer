@@ -9,9 +9,11 @@ const redis_1 = __importDefault(require("redis"));
 const DB_NAME = 'little_victories';
 // const DB_USER = 'jon';
 const DB_USER = 'root';
+// const DB_PASSWORD = process.env.DATABASE_PASSWORD;
 const DB_PASSWORD = '';
 exports.dbConnection = new sequelize_1.Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
-    dialect: 'mysql'
+    dialect: 'mysql',
+    logging: false
 });
 exports.dbConnection
     .authenticate()

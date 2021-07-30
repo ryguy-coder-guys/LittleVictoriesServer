@@ -1,6 +1,5 @@
 module.exports = {
   env: {
-    esnext: true,
     node: true,
   },
   extends: [

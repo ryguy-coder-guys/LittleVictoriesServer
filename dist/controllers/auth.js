@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeUser = exports.users = exports.loginUser = exports.registerUser = void 0;
+const achievement_1 = require("./../database/models/achievement");
 const user_1 = require("../database/models/user");
 const uuid_1 = require("uuid");
 const bcrypt_1 = __importDefault(require("bcrypt"));
@@ -15,6 +16,21 @@ const habit_1 = require("../database/models/habit");
 const friend_1 = require("../database/models/friend");
 const like_1 = require("../database/models/like");
 const comment_1 = require("../database/models/comment");
+const customIsPast = (date) => {
+    const currentDate = new Date();
+    if (date.getFullYear() < currentDate.getFullYear())
+        return true;
+    if (date.getFullYear() > currentDate.getFullYear())
+        return false;
+    if (date.getMonth() < currentDate.getMonth())
+        return true;
+    if (date.getMonth() > currentDate.getMonth())
+        return false;
+    if (date.getDate() + 1 < currentDate.getDate())
+        return true;
+    // if (date.getDate() + 1 >= currentDate.getDate()) return false;
+    return false;
+};
 const getHash = async (password) => await bcrypt_1.default.hash(password, 12);
 const validate = async (username, password) => {
     const user = await user_1.User.findOne({ where: { username } });
@@ -25,7 +41,7 @@ const validate = async (username, password) => {
     return !isPasswordCorrect ? false : user;
 };
 // add return type Promise<false | user>
-const registerUser = async (req, res) => {
+exports.registerUser = async (req, res) => {
     const { username, password } = req.body;
     const user = await user_1.User.findOne({ where: { username } });
     if (user) {
@@ -50,8 +66,7 @@ const registerUser = async (req, res) => {
         res.send(formattedUser);
     }
 };
-exports.registerUser = registerUser;
-const loginUser = async (req, res) => {
+exports.loginUser = async (req, res) => {
     const { username, password } = req.body;
     const isValid = await validate(username, password);
     if (!isValid) {
@@ -80,7 +95,7 @@ const loginUser = async (req, res) => {
             };
             const mappedTasks = tasks
                 .filter((task) => task.getDataValue('is_complete') === 0 ||
-                !date_fns_1.isPast(task.getDataValue('due_date')))
+                !customIsPast(new Date(task.getDataValue('due_date'))))
                 .map((task) => {
                 return {
                     id: task.getDataValue('id'),
@@ -96,20 +111,31 @@ const loginUser = async (req, res) => {
                 where: { user_id: user.id },
                 order: [['createdAt', 'DESC']]
             });
+            const achievements = await achievement_1.Achievement.findAll({
+                where: { user_id: user.id },
+                order: [['createdAt', 'ASC']]
+            });
+            const completedTasks = await task_1.Task.findAll({
+                where: { user_id: user.id, is_complete: true }
+            });
+            const followees = await friend_1.Friend.findAll({ where: { user_id: user.id } });
+            const numFollowees = followees.length;
             const formattedUser = {
                 ...mappedUser,
                 tasks: mappedTasks,
                 userStat: userStat,
                 entries: entries ? entries : [],
                 habits: habits ? habits : [],
-                userStats: userStats ? userStats : []
+                userStats: userStats ? userStats : [],
+                achievements,
+                numCompletedTasks: completedTasks.length,
+                numFollowees
             };
             res.send(formattedUser);
         }
     }
 };
-exports.loginUser = loginUser;
-const users = async (req, res) => {
+exports.users = async (req, res) => {
     try {
         const { userId } = req.params;
         const users = await user_1.User.findAll();
@@ -130,8 +156,7 @@ const users = async (req, res) => {
         res.sendStatus(500);
     }
 };
-exports.users = users;
-const removeUser = async (req, res) => {
+exports.removeUser = async (req, res) => {
     try {
         const { id } = req.params;
         await like_1.Like.destroy({ where: { user_id: id } });
@@ -149,5 +174,4 @@ const removeUser = async (req, res) => {
         res.sendStatus(500);
     }
 };
-exports.removeUser = removeUser;
 //# sourceMappingURL=auth.js.map

@@ -4,19 +4,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getFeedItems = exports.markTaskAsPrivate = exports.markTaskAsPublic = exports.markTaskAsIncomplete = exports.markTaskAsComplete = exports.removeTask = exports.addTask = exports.getTasks = void 0;
-const friend_1 = require("../database/models/friend");
+const friend_1 = require("./../database/models/friend");
 const sequelize_1 = __importDefault(require("sequelize"));
 const task_1 = require("../database/models/task");
 const user_1 = require("../database/models/user");
 const like_1 = require("../database/models/like");
 const comment_1 = require("../database/models/comment");
-const ptsToLvlUp = 250;
-const getTasks = async (req, res) => {
+const achievementLike_1 = require("./../database/models/achievementLike");
+const achievementComment_1 = require("./../database/models/achievementComment");
+const achievement_1 = require("./../database/models/achievement");
+const ptsToLvlUp = 100;
+exports.getTasks = async (req, res) => {
     const tasks = await task_1.Task.findAll();
     res.send(tasks);
 };
-exports.getTasks = getTasks;
-const addTask = async (req, res) => {
+exports.addTask = async (req, res) => {
     const { user_id, description, due_date, minutes_to_complete, is_important
     // list_id,
      } = req.body;
@@ -53,16 +55,14 @@ const addTask = async (req, res) => {
         res.sendStatus(500);
     }
 };
-exports.addTask = addTask;
-const removeTask = async (req, res) => {
+exports.removeTask = async (req, res) => {
     const { id } = req.params;
     await like_1.Like.destroy({ where: { task_id: id } });
     await comment_1.Comment.destroy({ where: { task_id: id } });
     await task_1.Task.destroy({ where: { id } });
     res.send(true);
 };
-exports.removeTask = removeTask;
-const markTaskAsComplete = async (req, res) => {
+exports.markTaskAsComplete = async (req, res) => {
     try {
         const { id } = req.params;
         await task_1.Task.update({ is_complete: true, completed_at: new Date() }, { where: { id } });
@@ -105,13 +105,12 @@ const markTaskAsComplete = async (req, res) => {
         console.log(error);
     }
 };
-exports.markTaskAsComplete = markTaskAsComplete;
-const markTaskAsIncomplete = async (req, res) => {
+exports.markTaskAsIncomplete = async (req, res) => {
     try {
         const { id } = req.params;
         await like_1.Like.destroy({ where: { task_id: id } });
         await comment_1.Comment.destroy({ where: { task_id: id } });
-        await task_1.Task.update({ is_complete: false, is_public: false }, { where: { id } });
+        await task_1.Task.update({ is_complete: false, is_public: false, completed_at: null }, { where: { id } });
         const task = await task_1.Task.findOne({ where: { id } });
         if (!task) {
             throw new Error(`task with ${id} isn't in db`);
@@ -149,8 +148,7 @@ const markTaskAsIncomplete = async (req, res) => {
         console.log(error);
     }
 };
-exports.markTaskAsIncomplete = markTaskAsIncomplete;
-const markTaskAsPublic = async (req, res) => {
+exports.markTaskAsPublic = async (req, res) => {
     try {
         const { id } = req.params;
         await task_1.Task.update({ is_public: true }, { where: { id } });
@@ -169,8 +167,7 @@ const markTaskAsPublic = async (req, res) => {
         res.status(500).send(error);
     }
 };
-exports.markTaskAsPublic = markTaskAsPublic;
-const markTaskAsPrivate = async (req, res) => {
+exports.markTaskAsPrivate = async (req, res) => {
     try {
         const { id } = req.params;
         await task_1.Task.update({ is_public: false }, { where: { id } });
@@ -182,8 +179,7 @@ const markTaskAsPrivate = async (req, res) => {
         res.status(500).send(error);
     }
 };
-exports.markTaskAsPrivate = markTaskAsPrivate;
-const getFeedItems = async (req, res) => {
+exports.getFeedItems = async (req, res) => {
     try {
         const { id } = req.params;
         const friends = await friend_1.Friend.findAll({ where: { user_id: id } });
@@ -202,7 +198,7 @@ const getFeedItems = async (req, res) => {
                 where: { id: feedItem.getDataValue('user_id') }
             });
             const foundUsername = foundUser?.getDataValue('username');
-            let likes = await like_1.Like.findAll({
+            const likes = await like_1.Like.findAll({
                 where: { task_id: feedItem.getDataValue('id') }
             });
             const comments = await comment_1.Comment.findAll({
@@ -226,11 +222,61 @@ const getFeedItems = async (req, res) => {
                 comments: mappedComments
             };
         }));
-        res.send(mappedFeed);
+        const achievements = await achievement_1.Achievement.findAll({
+            where: {
+                user_id: { [sequelize_1.default.Op.in]: mappedFriends }
+            },
+            order: [['createdAt', 'DESC']],
+            limit: 10
+        });
+        const mappedAchievements = await Promise.all(achievements.map(async (achievement) => {
+            const foundUser = await user_1.User.findOne({
+                where: { id: achievement.getDataValue('user_id') }
+            });
+            if (foundUser) {
+                const foundUsername = foundUser.getDataValue('username');
+                const achievementLikes = await achievementLike_1.AchievementLike.findAll({
+                    where: { achievement_id: achievement.getDataValue('id') }
+                });
+                const achievementComments = await achievementComment_1.AchievementComment.findAll({
+                    where: { achievement_id: achievement.getDataValue('id') }
+                });
+                const mappedAchievementComments = await Promise.all(achievementComments.map(async (achievementComment) => {
+                    const user = await user_1.User.findOne({
+                        where: { id: achievementComment.user_id }
+                    });
+                    if (user) {
+                        return {
+                            id: achievementComment.getDataValue('id'),
+                            content: achievementComment.getDataValue('content'),
+                            user_id: achievementComment.getDataValue('user_id'),
+                            username: user.username
+                        };
+                    }
+                }));
+                return {
+                    id: achievement.getDataValue('id'),
+                    username: foundUsername,
+                    description: achievement.getDataValue('achievement_type'),
+                    completed_at: achievement.getDataValue('createdAt'),
+                    likes: achievementLikes,
+                    comments: mappedAchievementComments,
+                    isAchievement: true
+                };
+            }
+        }));
+        const combined = [...mappedFeed, ...mappedAchievements]
+            .sort((e1, e2) => {
+            if (e1 && e2) {
+                return e2.completed_at - e1.completed_at;
+            }
+        })
+            .slice(0, 10);
+        res.send(combined);
+        // res.send(mappedFeed);
     }
     catch (error) {
         res.status(500).send(error);
     }
 };
-exports.getFeedItems = getFeedItems;
 //# sourceMappingURL=tasks.js.map

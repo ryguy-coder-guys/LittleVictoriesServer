@@ -14,6 +14,7 @@ const likes_1 = __importDefault(require("./routers/likes"));
 const comments_1 = __importDefault(require("./routers/comments"));
 const readableFont_1 = __importDefault(require("./routers/readableFont"));
 const friends_1 = __importDefault(require("./routers/friends"));
+const achievements_1 = __importDefault(require("./routers/achievements"));
 const app = express_1.default();
 app.use(express_1.default.json({ limit: '50mb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '50mb', parameterLimit: 50000 }));
@@ -27,5 +28,10 @@ app.use('/api/likes', likes_1.default);
 app.use('/api/comments', comments_1.default);
 app.use('/api/font', readableFont_1.default);
 app.use('/api/friends', friends_1.default);
+app.use('/api/achievements', achievements_1.default);
+app.use((err, req, res, next) => {
+    console.log(err);
+    res.send(err);
+});
 exports.default = app;
 //# sourceMappingURL=app.js.map

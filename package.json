@@ -3,7 +3,8 @@
   "scripts": {
     "start-dev": "nodemon dist/index.js",
     "start-prod": "node dist/index.js",
-    "deploy": "pm2 deploy ecosystem.config.js production"
+    "deploy": "pm2 deploy ecosystem.config.js production",
+    "build": "tsc"
   },
   "dependencies": {
     "bcrypt": "^5.0.1",
