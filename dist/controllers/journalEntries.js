@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteJournal = exports.addJournalEntry = exports.getAllJournals = exports.getJournalEntry = void 0;
 const journalEntry_1 = require("../database/models/journalEntry");
-const getJournalEntry = async (req, res) => {
+exports.getJournalEntry = async (req, res) => {
     const { user_id, date } = req.params;
     try {
         const journalEntry = await journalEntry_1.JournalEntry.findOne({
@@ -15,8 +15,7 @@ const getJournalEntry = async (req, res) => {
         res.sendStatus(500);
     }
 };
-exports.getJournalEntry = getJournalEntry;
-const getAllJournals = async (req, res) => {
+exports.getAllJournals = async (req, res) => {
     const { user_id } = req.params;
     try {
         const allJournals = await journalEntry_1.JournalEntry.findAll({
@@ -29,8 +28,7 @@ const getAllJournals = async (req, res) => {
         res.sendStatus(500);
     }
 };
-exports.getAllJournals = getAllJournals;
-const addJournalEntry = async (req, res) => {
+exports.addJournalEntry = async (req, res) => {
     const { user_id, content, date } = req.body;
     if (content === '') {
         try {
@@ -67,8 +65,7 @@ const addJournalEntry = async (req, res) => {
         }
     }
 };
-exports.addJournalEntry = addJournalEntry;
-const deleteJournal = async (req, res) => {
+exports.deleteJournal = async (req, res) => {
     const { user_id, date } = req.params;
     try {
         await journalEntry_1.JournalEntry.destroy({ where: { user_id, date } });
@@ -79,5 +76,4 @@ const deleteJournal = async (req, res) => {
         res.sendStatus(500);
     }
 };
-exports.deleteJournal = deleteJournal;
 //# sourceMappingURL=journalEntries.js.map

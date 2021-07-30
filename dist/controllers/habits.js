@@ -3,8 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.markHabitAsIncomplete = exports.markHabitAsComplete = exports.removeHabit = exports.addHabit = void 0;
 const habit_1 = require("../database/models/habit");
 const user_1 = require("../database/models/user");
-const ptsToLvlUp = 250;
-const addHabit = async (req, res) => {
+const ptsToLvlUp = 100;
+exports.addHabit = async (req, res) => {
     const { user_id, description, frequency, days_of_week, calendar_date } = req.body;
     try {
         const newHabit = await habit_1.Habit.create({
@@ -21,8 +21,7 @@ const addHabit = async (req, res) => {
         res.sendStatus(500);
     }
 };
-exports.addHabit = addHabit;
-const removeHabit = async (req, res) => {
+exports.removeHabit = async (req, res) => {
     try {
         const { id } = req.params;
         await habit_1.Habit.destroy({ where: { id } });
@@ -32,8 +31,7 @@ const removeHabit = async (req, res) => {
         console.log('error removing habit: ', err);
     }
 };
-exports.removeHabit = removeHabit;
-const markHabitAsComplete = async (req, res) => {
+exports.markHabitAsComplete = async (req, res) => {
     try {
         const { id } = req.params;
         await habit_1.Habit.update(
@@ -54,18 +52,19 @@ const markHabitAsComplete = async (req, res) => {
             points: currentPoints + minutes < ptsToLvlUp
                 ? currentPoints + minutes
                 : (currentPoints + minutes) % ptsToLvlUp,
-            level: currentPoints + minutes < ptsToLvlUp ? currentLevel : currentLevel + 1,
+            level: currentPoints + minutes < ptsToLvlUp ? currentLevel : currentLevel + 1
         }, { where: { id: habit.user_id }, returning: true });
         const updatedUser = await user_1.User.findOne({ where: { id: habit.user_id } });
-        res.status(200).send({ habit, points: updatedUser?.points, level: updatedUser?.level });
+        res
+            .status(200)
+            .send({ habit, points: updatedUser?.points, level: updatedUser?.level });
     }
     catch (err) {
         console.log('error updating habit to compelete: ', err);
         res.sendStatus(500);
     }
 };
-exports.markHabitAsComplete = markHabitAsComplete;
-const markHabitAsIncomplete = async (req, res) => {
+exports.markHabitAsIncomplete = async (req, res) => {
     try {
         const { id } = req.params;
         await habit_1.Habit.update({ is_complete: false }, { where: { id } });
@@ -84,15 +83,16 @@ const markHabitAsIncomplete = async (req, res) => {
             points: currentPoints - minutes < 0
                 ? ptsToLvlUp - (minutes - currentPoints)
                 : currentPoints - minutes,
-            level: currentPoints - minutes < 0 ? currentLevel - 1 : currentLevel,
+            level: currentPoints - minutes < 0 ? currentLevel - 1 : currentLevel
         }, { where: { id: habit.user_id } });
         const updatedUser = await user_1.User.findOne({ where: { id: habit.user_id } });
-        res.status(200).send({ habit, points: updatedUser?.points, level: updatedUser?.level });
+        res
+            .status(200)
+            .send({ habit, points: updatedUser?.points, level: updatedUser?.level });
     }
     catch (err) {
         console.log('error marking habit as incomplete, error: ', err);
         res.sendStatus(500);
     }
 };
-exports.markHabitAsIncomplete = markHabitAsIncomplete;
 //# sourceMappingURL=habits.js.map

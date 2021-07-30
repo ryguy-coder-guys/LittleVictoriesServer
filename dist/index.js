@@ -9,7 +9,7 @@ const cron_1 = __importDefault(require("./cron"));
 database_1.dbConnection
     .sync()
     .then(() => {
-    console.log('little victories database successfully synced');
+    console.log('little victories database successfully synced...');
     const PORT = 3000;
     websocket_1.default.listen(PORT, () => {
         console.log(`little victories server listening on port ${PORT}`);

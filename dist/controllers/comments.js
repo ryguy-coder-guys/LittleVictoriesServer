@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeComment = exports.addComment = void 0;
-const comment_1 = require("../database/models/comment");
-const user_1 = require("../database/models/user");
-const addComment = async (req, res) => {
+const comment_1 = require("./../database/models/comment");
+const user_1 = require("./../database/models/user");
+exports.addComment = async (req, res) => {
     try {
         const { user_id, task_id, content } = req.body;
         const comment = await comment_1.Comment.create({
@@ -28,11 +28,9 @@ const addComment = async (req, res) => {
         res.status(500).send(error);
     }
 };
-exports.addComment = addComment;
-const removeComment = async (req, res) => {
+exports.removeComment = async (req, res) => {
     const { id } = req.params;
     await comment_1.Comment.destroy({ where: { id } });
     res.send(true);
 };
-exports.removeComment = removeComment;
 //# sourceMappingURL=comments.js.map

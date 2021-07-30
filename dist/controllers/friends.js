@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeFriend = exports.addFriend = void 0;
 const user_1 = require("../database/models/user");
 const friend_1 = require("../database/models/friend");
-const addFriend = async (req, res) => {
+exports.addFriend = async (req, res) => {
     try {
         const { userId, friendId } = req.body;
         const user = await user_1.User.findOne({
@@ -49,8 +49,7 @@ const addFriend = async (req, res) => {
         console.log(error);
     }
 };
-exports.addFriend = addFriend;
-const removeFriend = async (req, res) => {
+exports.removeFriend = async (req, res) => {
     try {
         const { userId, friendId } = req.params;
         const user = await user_1.User.findOne({
@@ -93,5 +92,4 @@ const removeFriend = async (req, res) => {
         console.log(error);
     }
 };
-exports.removeFriend = removeFriend;
 //# sourceMappingURL=friends.js.map
